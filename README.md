@@ -15,3 +15,9 @@ A streamlined, full-stack To Do List application built with C# (ASP.NET Core) an
 <img width="2560" height="1392" alt="darkmode" src="https://github.com/user-attachments/assets/590e290a-26fe-4424-87cc-d6a36ac04032" />
 
 <img width="2560" height="1392" alt="lightmode" src="https://github.com/user-attachments/assets/27b4a7f1-345e-4a55-80a5-6f93d1cb1ec4" />
+
+### Getting Started
+1. Clone repository using `git clone https://github.com/patrikwiol/ToDoList.git`
+2. Update your connection string in `appsettings.json`.
+3. Run `dotnet ef database update` to initialize the database.
+4. Use `dotnet run` to start the application.
