@@ -1,0 +1,773 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ASP.NET To-Do List</title>
+	<style>
+		:root {
+			--primary: #00a2ed;
+			--bg-main: #f8fafc;
+			--bg-sidebar: #ffffff;
+			--bg-panel: #ffffff;
+			--text-main: #1e293b;
+			--text-sub: #64748b;
+			--border: #e2e8f0;
+			--hover-bg: #f1f5f9;
+			--selected-bg: #e6f6ff;
+			--success: #10b981;
+			--danger: #ef4444;
+			--danger-bg: rgba(239, 68, 68, 0.15);
+			--item-bg: #ffffff;
+			--radius-main: 10px;
+		}
+
+		[data-theme="dark"] {
+			--bg-main: #0f172a;
+			--bg-sidebar: #1e293b;
+			--bg-panel: #1e293b;
+			--text-main: #f1f5f9;
+			--text-sub: #94a3b8;
+			--border: #334155;
+			--hover-bg: #334155;
+			--selected-bg: #0ea5e933;
+			--item-bg: #1e293b;
+			--danger-bg: rgba(239, 68, 68, 0.25);
+		}
+
+		body {
+			font-family: 'Segoe UI', system-ui, sans-serif;
+			margin: 0;
+			display: flex;
+			height: 100vh;
+			color: var(--text-main);
+			background: var(--bg-main);
+			overflow: hidden;
+			transition: background 0.3s ease, color 0.3s ease;
+		}
+
+		.btn-add, .btn-icon, .btn-theme {
+			transition: transform 0.1s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+			cursor: pointer;
+			user-select: none;
+		}
+
+			.btn-add:active, .btn-icon:active, .btn-theme:active {
+				transform: scale(0.92);
+			}
+
+		input[type="checkbox"] {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 22px;
+			height: 22px;
+			border: 2px solid var(--border);
+			border-radius: 6px;
+			cursor: pointer;
+			display: grid;
+			place-content: center;
+			transition: all 0.2s;
+			background: var(--item-bg);
+			flex-shrink: 0;
+		}
+
+			input[type="checkbox"]:checked {
+				background: var(--primary);
+				border-color: var(--primary);
+			}
+
+			input[type="checkbox"]::before {
+				content: "";
+				width: 12px;
+				height: 12px;
+				transform: scale(0);
+				transition: 120ms transform ease-in-out;
+				box-shadow: inset 1em 1em white;
+				clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+			}
+
+			input[type="checkbox"]:checked::before {
+				transform: scale(1);
+			}
+
+		.input-group {
+			display: flex;
+			align-items: center;
+			background: var(--item-bg);
+			border-radius: var(--radius-main);
+			padding: 4px 8px;
+			border: 1px solid var(--border);
+			transition: border-color 0.2s, box-shadow 0.2s;
+		}
+
+			.input-group:focus-within {
+				border-color: var(--primary);
+				box-shadow: 0 0 0 1px var(--primary);
+			}
+
+			.input-group input {
+				border: none;
+				flex: 1;
+				outline: none;
+				font-size: 14px;
+				background: transparent;
+				padding: 8px;
+				color: var(--text-main);
+				font-family: inherit;
+			}
+
+		.btn-add {
+			background: transparent;
+			color: var(--primary);
+			border: none;
+			border-radius: 8px;
+			width: 32px;
+			height: 32px;
+			font-size: 24px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+			.btn-add:hover {
+				background: rgba(0, 162, 237, 0.1);
+			}
+
+		#sidebar {
+			width: 290px;
+			background: var(--bg-sidebar);
+			border-right: 1px solid var(--border);
+			display: flex;
+			flex-direction: column;
+		}
+
+		.sidebar-header {
+			padding: 30px 24px 10px;
+			font-size: 20px;
+			font-weight: 700;
+			color: var(--primary);
+			white-space: nowrap;
+		}
+
+		.sidebar-padding {
+			padding: 12px 12px 20px;
+		}
+
+		#lists-container {
+			flex: 1;
+			overflow-y: auto;
+			padding: 0 12px;
+		}
+
+		.selectable-item {
+			cursor: pointer;
+			transition: background-color 0.2s, border-color 0.2s;
+			border-radius: var(--radius-main);
+			border: 1px solid var(--border);
+			background: var(--item-bg);
+			display: flex;
+			align-items: center;
+		}
+
+			.selectable-item:hover {
+				background: var(--hover-bg);
+			}
+
+			.selectable-item.active, .selectable-item.selected {
+				background: var(--selected-bg) !important;
+				color: var(--primary);
+				border-color: var(--primary);
+			}
+
+		.sidebar-item {
+			padding: 12px;
+			margin-bottom: 6px;
+			justify-content: space-between;
+			color: var(--text-sub);
+			font-weight: 500;
+		}
+
+		.theme-toggle-container {
+			padding: 16px;
+			border-top: 1px solid var(--border);
+		}
+
+		.btn-theme {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			width: 100%;
+			padding: 12px;
+			background: var(--hover-bg);
+			border: 1px solid var(--border);
+			border-radius: var(--radius-main);
+			color: var(--text-main);
+			font-weight: 600;
+			font-size: 13px;
+		}
+
+			.btn-theme:hover {
+				background: var(--border);
+				color: var(--primary);
+			}
+
+			.btn-theme:active {
+				background: var(--selected-bg);
+			}
+
+		#main-content {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.header {
+			padding: 40px 40px 20px;
+			font-size: 26px;
+			font-weight: 700;
+		}
+
+		.main-input-wrapper {
+			padding: 0 40px 30px;
+		}
+
+		#task-list-container {
+			flex: 1;
+			overflow-y: auto;
+			padding: 0 40px;
+		}
+
+		.task-row {
+			padding: 16px;
+			margin-bottom: 10px;
+		}
+
+		.progress-pill {
+			font-size: 10px;
+			font-weight: 700;
+			padding: 4px 10px;
+			border-radius: 6px;
+			background: var(--hover-bg);
+			color: var(--text-sub);
+			margin-top: 8px;
+			display: inline-block;
+			border: 1px solid var(--border);
+			transition: all 0.2s ease;
+		}
+
+			.progress-pill.done {
+				background: rgba(16, 185, 129, 0.1);
+				color: var(--success);
+				border-color: var(--success);
+			}
+
+		.task-content {
+			flex: 1;
+			margin: 0 16px;
+		}
+
+		#detail-panel {
+			width: 400px;
+			background: var(--bg-panel);
+			border-left: 1px solid var(--border);
+			display: none;
+			flex-direction: column;
+		}
+
+		.detail-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 30px;
+		}
+
+		.detail-body {
+			padding: 0 30px 30px;
+			flex: 1;
+			overflow-y: auto;
+		}
+
+		.subtask-item {
+			padding: 12px;
+			margin-bottom: 8px;
+			justify-content: space-between;
+		}
+
+		.subtask-text {
+			flex: 1;
+			margin-left: 16px;
+			font-size: 14px;
+		}
+
+		.note-box {
+			width: 100%;
+			height: 160px;
+			background: var(--item-bg);
+			border: 1px solid var(--border);
+			border-radius: var(--radius-main);
+			padding: 15px;
+			margin-top: 10px;
+			box-sizing: border-box;
+			font-family: inherit;
+			resize: none;
+			font-size: 14px;
+			outline: none;
+			color: var(--text-main);
+		}
+
+		.item-actions {
+			display: flex;
+			gap: 4px;
+			opacity: 0;
+			transition: opacity 0.2s;
+		}
+
+		.selectable-item:hover .item-actions {
+			opacity: 1;
+		}
+
+		.btn-icon {
+			width: 32px;
+			height: 32px;
+			border-radius: 6px;
+			background: transparent;
+			border: none;
+			color: var(--text-sub);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 18px;
+		}
+
+			.btn-icon:hover {
+				background: rgba(128,128,128,0.15);
+				color: var(--primary);
+			}
+
+			.btn-icon.del:hover {
+				background: var(--danger-bg);
+				color: var(--danger);
+			}
+
+		.btn-close-x {
+			font-size: 32px;
+			color: var(--text-sub);
+			cursor: pointer;
+			line-height: 1;
+			display: flex;
+			align-items: center;
+			transition: color 0.2s;
+		}
+
+			.btn-close-x:hover {
+				color: var(--primary);
+			}
+
+		.completed .task-name {
+			text-decoration: line-through;
+			color: var(--text-sub);
+			opacity: 0.6;
+		}
+	</style>
+</head>
+<body data-theme="light">
+
+	<div id="sidebar">
+		<div class="sidebar-header">ASP.NET To-Do List</div>
+		<div class="sidebar-padding">
+			<div class="input-group">
+				<input type="text" id="newListInput" placeholder="Add a List" onkeypress="if(event.key==='Enter') CreateNewList()">
+				<button class="btn-add" onclick="CreateNewList()">+</button>
+			</div>
+		</div>
+		<div id="lists-container"></div>
+		<div class="theme-toggle-container">
+			<button class="btn-theme" onclick="ToggleTheme()">
+				<span id="theme-icon">☾</span>
+				<span id="theme-text">Dark Mode</span>
+			</button>
+		</div>
+	</div>
+
+	<div id="main-content">
+		<div class="header" id="current-list-name">Workspace</div>
+		<div class="main-input-wrapper">
+			<div class="input-group" style="padding: 10px 15px;">
+				<input type="text" id="newTaskInput" placeholder="Add a Task" onkeypress="if(event.key==='Enter') AddTask()">
+				<button class="btn-add" onclick="AddTask()">+</button>
+			</div>
+		</div>
+		<div id="task-list-container">
+			<div id="active-tasks"></div>
+			<details id="completed-section">
+				<summary id="completed-count" style="padding:20px 0; cursor:pointer; color:var(--text-sub); font-size:12px; font-weight:700;">COMPLETED</summary>
+				<div id="completed-tasks"></div>
+			</details>
+		</div>
+	</div>
+
+	<div id="detail-panel">
+		<div class="detail-header">
+			<div id="detail-task-name" style="font-size: 20px; font-weight: 700;">Task Details</div>
+			<div class="btn-close-x" onclick="CloseDetails()">&times;</div>
+		</div>
+		<div class="detail-body">
+			<label style="font-size:11px; font-weight:800; color:var(--text-sub); text-transform:uppercase;">Steps</label>
+			<div class="input-group" style="margin: 15px 0;">
+				<input type="text" id="newSubInput" placeholder="Add a Step" onkeypress="if(event.key==='Enter') AddSubTask()">
+				<button class="btn-add" onclick="AddSubTask()">+</button>
+			</div>
+			<div id="subtask-container" style="margin-bottom: 25px;"></div>
+
+			<label style="font-size:11px; font-weight:800; color:var(--text-sub); text-transform:uppercase;">Notes</label>
+			<textarea class="note-box" id="taskNote" placeholder="Add a note" onblur="SaveCurrentTask()"></textarea>
+		</div>
+	</div>
+
+	<script>
+		// State management
+		let _currentListId = null;
+		let _selectedTaskId = null;
+		let _isEditing = false;
+
+		// Helper to match my code style
+		const ToPascal = (obj) =>
+		{
+			const result = {};
+			for (let key in obj) {
+				const pKey = key.charAt(0).toUpperCase() + key.slice(1);
+				result[pKey] = (obj[key] !== null && typeof obj[key] === 'object' && !Array.isArray(obj[key]))
+					? ToPascal(obj[key]) : obj[key];
+			}
+			return result;
+		};
+
+		async function LoadApp(targetId = null)
+		{
+			try
+			{
+				const res = await fetch('/api/ToDoList');
+				const lists = await res.json();
+				RenderSidebar(lists);
+
+				if (targetId)
+					await SelectList(targetId);
+				else if (lists.length > 0 && !_currentListId)
+					await SelectList(lists[0].id || lists[0].ID);
+				else if (lists.length === 0)
+					ClearMainView();
+			}
+			catch (err)
+			{
+				console.error("Load Failed", err);
+			}
+		}
+
+		function ClearMainView()
+		{
+			document.getElementById('current-list-name').innerText = "Workspace";
+			document.getElementById('active-tasks').innerHTML = "";
+			document.getElementById('completed-tasks').innerHTML = "";
+			document.getElementById('completed-count').innerText = "COMPLETED (0)";
+			_currentListId = null;
+		}
+
+		function RenderSidebar(lists)
+		{
+			const container = document.getElementById('lists-container');
+			container.innerHTML = lists.map(l =>
+			{
+				const id = l.id || l.ID;
+				return `
+					<div class="sidebar-item selectable-item ${_currentListId == id ? 'active' : ''}" onclick="SelectList(${id})">
+						<span id="list-text-${id}">${l.name || l.Name}</span>
+						<div class="item-actions">
+							<button class="btn-icon" onclick="event.stopPropagation(); StartEdit('list', ${id})">✎</button>
+							<button class="btn-icon del" onclick="event.stopPropagation(); DeleteList(${id})">×</button>
+						</div>
+					</div>`;
+			}).join('');
+		}
+
+		async function SelectList(id)
+		{
+			if (_currentListId !== id)
+				CloseDetails();
+
+			_currentListId = id;
+
+			const res = await fetch(`/api/ToDoList/${id}`);
+			if (!res.ok)
+			{
+				ClearMainView();
+				return;
+			}
+
+			const list = await res.json();
+			document.getElementById('current-list-name').innerText = list.name || list.Name;
+
+			const tasks = list.tasks || list.Tasks || [];
+			RenderTaskSection(tasks.filter(t => !(t.isComplete || t.IsComplete)), 'active-tasks');
+
+			const completed = tasks.filter(t => (t.isComplete || t.IsComplete));
+			RenderTaskSection(completed, 'completed-tasks');
+			document.getElementById('completed-count').innerText = `COMPLETED (${completed.length})`;
+
+			document.querySelectorAll('.sidebar-item').forEach(el =>
+			{
+				const attr = el.getAttribute('onclick');
+				if (attr)
+				{
+					const match = attr.match(/\d+/);
+					if (match) el.classList.toggle('active', match[0] == _currentListId);
+				}
+			});
+		}
+
+		function RenderTaskSection(tasks, containerId)
+		{
+			const container = document.getElementById(containerId);
+			container.innerHTML = tasks.map(t =>
+			{
+				const tid = t.id || t.ID;
+				const subs = t.subTasks || t.SubTasks || [];
+				const done = subs.filter(s => s.isComplete || s.IsComplete).length;
+				const pillClass = (done === subs.length && subs.length > 0) ? 'done' : '';
+				const progressPill = subs.length > 0 ? `<div class="progress-pill ${pillClass}">${done} / ${subs.length} STEPS</div>` : '';
+
+				return `
+					<div class="task-row selectable-item ${_selectedTaskId === tid ? 'selected' : ''} ${(t.isComplete || t.IsComplete) ? 'completed' : ''}" onclick="HandleTaskClick(${tid})">
+						<input type="checkbox" ${(t.isComplete || t.IsComplete) ? 'checked' : ''} onclick="event.stopPropagation(); ToggleTask(${tid})">
+						<div class="task-content">
+							<div class="task-name" id="task-text-${tid}">${t.name || t.Name}</div>
+							${progressPill}
+						</div>
+						<div class="item-actions">
+							<button class="btn-icon" onclick="event.stopPropagation(); StartEdit('task', ${tid})">✎</button>
+							<button class="btn-icon del" onclick="event.stopPropagation(); DeleteTask(${tid})">×</button>
+						</div>
+					</div>`;
+			}).join('');
+		}
+
+		function HandleTaskClick(taskId)
+		{
+			const isInputActive = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+			if (isInputActive)
+				return;
+
+			if (_selectedTaskId === taskId)
+				CloseDetails();
+			else
+				OpenDetails(taskId);
+		}
+
+		async function CreateNewList(manualName = null)
+		{
+			const input = document.getElementById('newListInput');
+			const name = manualName || input.value.trim() || "New List";
+			const res = await fetch('/api/ToDoList', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ Name: name }) });
+			const data = await res.json();
+			const newId = data.id || data.ID;
+
+			input.value = '';
+			await LoadApp(newId);
+			return newId;
+		}
+
+		async function AddTask()
+		{
+			const input = document.getElementById('newTaskInput');
+			const name = input.value.trim() || "New Task";
+			let listId = _currentListId;
+			if (!listId)
+			{
+				listId = await CreateNewList("New List");
+			}
+
+			await fetch('/api/ToDo', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ Name: name, ListID: listId, IsComplete: false })
+			});
+
+			input.value = '';
+			await SelectList(listId);
+		}
+
+		async function OpenDetails(taskId, skipRefresh = false)
+		{
+			if (_isEditing)
+				return;
+			
+			_selectedTaskId = taskId;
+			const res = await fetch(`/api/ToDo/${taskId}`);
+			const task = await res.json();
+
+			document.getElementById('detail-panel').style.display = 'flex';
+			document.getElementById('detail-task-name').innerText = task.name || task.Name;
+			document.getElementById('taskNote').value = task.note || task.Note || '';
+
+			RenderSubtasks(task.subTasks || task.SubTasks || []);
+			if (!skipRefresh)
+				SelectList(_currentListId);
+		}
+
+		function RenderSubtasks(subs)
+		{
+			document.getElementById('subtask-container').innerHTML = subs.map(s =>
+			{
+				const sid = s.id || s.ID;
+				const isDone = s.isComplete || s.IsComplete;
+				return `
+					<div class="subtask-item selectable-item">
+						<input type="checkbox" ${isDone ? 'checked' : ''} onchange="ToggleSubTask(${_selectedTaskId}, ${sid})">
+						<span class="subtask-text" id="subtask-text-${sid}" style="${isDone ? 'text-decoration:line-through; color:var(--text-sub)' : ''}">${s.name || s.Name}</span>
+						<div class="item-actions">
+							<button class="btn-icon" onclick="event.stopPropagation(); StartEdit('subtask', ${sid}, ${_selectedTaskId})">✎</button>
+							<button class="btn-icon del" onclick="DeleteSubTask(${_selectedTaskId}, ${sid})">×</button>
+						</div>
+					</div>`;
+			}).join('');
+		}
+
+		async function AddSubTask()
+		{
+			const input = document.getElementById('newSubInput');
+			const name = input.value.trim() || "New Step";
+			if (!_selectedTaskId)
+				return;
+
+			await fetch('/api/ToDo/subtask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ Name: name, MainTaskID: _selectedTaskId, IsComplete: false }) });
+			input.value = '';
+			const taskRes = await fetch(`/api/ToDo/${_selectedTaskId}`);
+			const updatedTask = await taskRes.json();
+
+			RenderSubtasks(updatedTask.subTasks || updatedTask.SubTasks);
+			await SelectList(_currentListId);
+		}
+
+		async function ToggleSubTask(tid, sid)
+		{
+			const taskRes = await fetch(`/api/ToDo/${tid}`);
+			const task = await taskRes.json();
+			const sub = (task.subTasks || task.SubTasks).find(s => (s.id || s.ID) === sid);
+			sub.IsComplete = !(sub.isComplete || sub.IsComplete);
+
+			await fetch(`/api/ToDo/subtask/${sid}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ToPascal(sub)) });
+			const updated = await (await fetch(`/api/ToDo/${tid}`)).json();
+
+			RenderSubtasks(updated.subTasks || updated.SubTasks);
+			await SelectList(_currentListId);
+		}
+
+		function StartEdit(type, id, pId)
+		{
+			_isEditing = true;
+			const span = document.getElementById(`${type}-text-${id}`);
+			const old = span.innerText;
+			span.innerHTML = `<input type="text" style="width:100%; border:none; background:transparent; outline:none; font-family:inherit; color:var(--primary); font-weight:600;" id="edit-in-${id}" value="${old}">`;
+			const inp = document.getElementById(`edit-in-${id}`);
+
+			inp.onclick = (e) => e.stopPropagation();
+			inp.focus();
+			inp.onblur = async () => { await FinishEdit(type, id, inp.value, old, pId); _isEditing = false; };
+			inp.onkeypress = (e) => { if (e.key === 'Enter') inp.blur(); };
+		}
+
+		async function FinishEdit(type, id, val, old, pId)
+		{
+			if (val === old)
+			{
+				type === 'subtask' ? OpenDetails(pId, true) : SelectList(_currentListId);
+				return;
+			}
+
+			const name = val.trim() || old;
+			let url = type === 'list' ? `/api/ToDoList/${id}` : (type === 'task' ? `/api/ToDo/${id}` : `/api/ToDo/subtask/${id}`);
+			const getRes = await fetch(type === 'subtask' ? `/api/ToDo/${pId}` : url);
+			const data = await getRes.json();
+
+			if (type === 'subtask')
+			{
+				const sub = (data.subTasks || data.SubTasks).find(s => (s.id || s.ID) === id);
+				sub.Name = name;
+				await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ToPascal(sub)) });
+				OpenDetails(pId);
+			}
+			else
+			{
+				data.Name = name;
+				await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ToPascal(data)) });
+				type === 'list' ? LoadApp(_currentListId) : SelectList(_currentListId);
+			}
+		}
+
+		async function ToggleTask(id)
+		{
+			const res = await fetch(`/api/ToDo/${id}`);
+			const t = await res.json();
+			t.IsComplete = !(t.isComplete || t.IsComplete);
+
+			await fetch(`/api/ToDo/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ToPascal(t)) });
+			await SelectList(_currentListId);
+		}
+
+		async function SaveCurrentTask()
+		{
+			if (!_selectedTaskId)
+				return;
+
+			const res = await fetch(`/api/ToDo/${_selectedTaskId}`);
+			const t = await res.json();
+			t.Note = document.getElementById('taskNote').value;
+
+			await fetch(`/api/ToDo/${_selectedTaskId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ToPascal(t)) });
+		}
+
+		async function DeleteSubTask(tid, sid) { await fetch(`/api/ToDo/subtask/${sid}`, { method: 'DELETE' }); OpenDetails(tid); }
+		async function DeleteTask(id)
+		{
+			await fetch(`/api/ToDo/${id}`, { method: 'DELETE' });
+			if (_selectedTaskId === id)
+            {
+                CloseDetails();
+                await SelectList(_currentListId);
+			}
+		}
+		async function DeleteList(id)
+		{
+			if (confirm("Delete List?"))
+			{
+				await fetch(`/api/ToDoList/${id}`, { method: 'DELETE' });
+				if (_currentListId === id)
+				{
+					CloseDetails();
+					ClearMainView();
+				}
+				await LoadApp();
+			}
+		}
+
+		function CloseDetails()
+		{
+			document.getElementById('detail-panel').style.display = 'none';
+			_selectedTaskId = null;
+			document.querySelectorAll('.task-row').forEach(r => r.classList.remove('selected'));
+		}
+
+		function ToggleTheme()
+		{
+			const body = document.body;
+			const isLight = body.getAttribute('data-theme') === 'light';
+			body.setAttribute('data-theme', isLight ? 'dark' : 'light');
+
+			document.getElementById('theme-icon').innerText = isLight ? '☼' : '☾';
+			document.getElementById('theme-text').innerText = isLight ? 'Light Mode' : 'Dark Mode';
+		}
+
+		LoadApp();
+	</script>
+</body>
+</html>
